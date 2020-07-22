@@ -1,7 +1,13 @@
 package com.react.posts;
 
+import net.sf.jasperreports.engine.*;
+import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,6 +26,15 @@ public class PostRest {
     @ResponseBody
     public List<Post> getAll() {
         return repo.findAll();
+    }
+
+    @GetMapping(value = "/report", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @ResponseBody
+    public byte[] printAll(HttpServletResponse response) throws Exception {
+        ClassPathResource resourceFile = new ClassPathResource("/reports/Posts.jrxml");
+        JasperReport jasperReport = JasperCompileManager.compileReport(resourceFile.getInputStream());
+        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, null, new JRBeanCollectionDataSource(new ArrayList<>()));
+        return java.util.Base64.getEncoder().encode(JasperExportManager.exportReportToPdf(jasperPrint));
     }
 
     @GetMapping(value = "/{id}")
